@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Tag;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\TagResource;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\JsonResponse;
 
 
 class TagController extends Controller
@@ -42,11 +44,12 @@ class TagController extends Controller
             'created_by' => $tokenName, // Store the user’s name in the tag
         ]);
 
-        return response()->json([
+        return (new TagResource($tag))
+        ->additional([
             'message' => 'Tag created successfully',
-            'tag' => $tag,
-            'created_by' => $tokenName,
-        ], 201);
+        ])
+        ->response()
+        ->setStatusCode(201);
     }
 
     /**
@@ -54,10 +57,10 @@ class TagController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
         $tags = Tag::all();
-        return response()->json($tags);
+        return TagResource::collection($tags);
     }
 
     /**
@@ -66,7 +69,7 @@ class TagController extends Controller
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function show($id)
+    public function show($id): JsonResponse|TagResource
     {
         $tag = Tag::find($id);
 
@@ -74,7 +77,7 @@ class TagController extends Controller
             return response()->json(['message' => 'Tag not found'], 404);
         }
 
-        return response()->json($tag);
+        return new TagResource($tag);
     }
 
     /**
@@ -84,7 +87,7 @@ class TagController extends Controller
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): JsonResponse|TagResource
     {
         // Validate the request
         $request->validate([
@@ -104,10 +107,10 @@ class TagController extends Controller
             'name' => $request->name,
         ]);
 
-        return response()->json([
-            'message' => 'Tag updated successfully',
-            'tag' => $tag,
-        ]);
+        return (new TagResource($tag))
+            ->additional([
+                'message' => 'Tag updated successfully',
+            ]);
     }
 
     /**
